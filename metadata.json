@@ -1,0 +1,5 @@
+{
+  "name": "Bengaluru GeoPulse",
+  "description": "A comprehensive interactive GIS visualization of Bengaluru Urban & Rural Districts featuring multi-layer views (Taluks, Villages, Pincodes) with demographic data, literacy rates, and infrastructure analysis using React and Leaflet.",
+  "requestFramePermissions": []
+}
