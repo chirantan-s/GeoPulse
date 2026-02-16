@@ -2,7 +2,7 @@ import React from 'react';
 import { GeoFeature } from '../types';
 import { 
   Info, MapPin, Users, BookOpen, Train, Plane, Navigation, Ruler, Map, Layers, Building2,
-  Droplets, Zap, Bus, School, Stethoscope, Tractor, Mail, Home, ShoppingBag, Download, Hash
+  Droplets, Zap, Bus, School, Stethoscope, Tractor, Mail, Home, ShoppingBag, Download, Hash, Star, Activity, Phone, Globe, Clock
 } from 'lucide-react';
 
 interface InfoPanelProps {
@@ -43,6 +43,23 @@ const InfoPanel: React.FC<InfoPanelProps> = ({ feature }) => {
     document.body.removeChild(link);
   };
 
+  const renderStars = (rating?: number) => {
+    if (rating === undefined || rating === null) {
+        return <span className="text-xs text-slate-400 italic">No ratings available</span>;
+    }
+    return (
+      <div className="flex items-center gap-0.5">
+        {[...Array(5)].map((_, i) => (
+          <Star 
+            key={i} 
+            className={`w-3.5 h-3.5 ${i < Math.round(rating) ? 'text-yellow-400 fill-yellow-400' : 'text-slate-300'}`} 
+          />
+        ))}
+        <span className="ml-1.5 text-sm font-bold text-slate-700">{rating.toFixed(1)}</span>
+      </div>
+    );
+  };
+
   if (!data) {
     return (
       <div className="bg-white/80 backdrop-blur-md p-8 rounded-xl shadow-lg border border-slate-200 h-full flex flex-col items-center justify-center text-center text-slate-500">
@@ -50,14 +67,12 @@ const InfoPanel: React.FC<InfoPanelProps> = ({ feature }) => {
             <MapPin className="w-8 h-8 text-slate-400" />
         </div>
         <h3 className="text-xl font-bold text-slate-800">Select a Region</h3>
-        <p className="text-sm mt-2 max-w-[250px] leading-relaxed">Hover over map layers or click on Districts, Taluks, or Villages to view detailed analytics.</p>
+        <p className="text-sm mt-2 max-w-[250px] leading-relaxed">Hover over map layers or click on Districts, Taluks, Villages, or Stores to view detailed analytics.</p>
       </div>
     );
   }
 
   // --- REFINED COLOR LOGIC TO MATCH MAP ---
-  // Literacy now uses Blue scale on map, so let's match that vibe or keep it logical (Green is good)
-  // Let's keep Green for "Good" status in UI to imply positive metric
   const literacyRate = data.literacyRate ?? 0;
   const literacyColor = literacyRate > 80 ? 'text-emerald-700 bg-emerald-50 border-emerald-100' : literacyRate > 70 ? 'text-blue-700 bg-blue-50 border-blue-100' : 'text-orange-700 bg-orange-50 border-orange-100';
   const progressBarColor = literacyRate > 80 ? 'bg-emerald-500' : literacyRate > 70 ? 'bg-blue-500' : 'bg-orange-500';
@@ -67,14 +82,16 @@ const InfoPanel: React.FC<InfoPanelProps> = ({ feature }) => {
       'District': 'bg-slate-800 text-white border-slate-700',
       'Taluk': 'bg-blue-100 text-blue-800 border-blue-200', // Matches Blue Map Layer
       'Village': 'bg-orange-100 text-orange-800 border-orange-200', // Matches Warm Map Layer
-      'Pincode': 'bg-purple-100 text-purple-800 border-purple-200' // Matches Purple Map Layer
+      'Pincode': 'bg-purple-100 text-purple-800 border-purple-200', // Matches Purple Map Layer
+      'Store': 'bg-red-100 text-red-800 border-red-200' // Matches Red Store Layer
   };
   
   const iconColors = {
       'District': 'text-slate-600',
       'Taluk': 'text-blue-600',
       'Village': 'text-orange-600',
-      'Pincode': 'text-purple-600'
+      'Pincode': 'text-purple-600',
+      'Store': 'text-red-600'
   }
 
   return (
@@ -82,10 +99,11 @@ const InfoPanel: React.FC<InfoPanelProps> = ({ feature }) => {
       
       {/* Header Section */}
       <div className="flex items-start gap-4 mb-6 pb-6 border-b border-slate-100">
-        <div className={`p-3 rounded-xl mt-1 shadow-sm ${data.type === 'District' ? 'bg-slate-100' : data.type === 'Taluk' ? 'bg-blue-50' : data.type === 'Village' ? 'bg-orange-50' : 'bg-purple-50'}`}>
+        <div className={`p-3 rounded-xl mt-1 shadow-sm ${data.type === 'District' ? 'bg-slate-100' : data.type === 'Taluk' ? 'bg-blue-50' : data.type === 'Village' ? 'bg-orange-50' : data.type === 'Store' ? 'bg-red-50' : 'bg-purple-50'}`}>
           {data.type === 'District' ? <Building2 className={`w-8 h-8 ${iconColors[data.type]}`} /> :
            data.type === 'Taluk' ? <Map className={`w-8 h-8 ${iconColors[data.type]}`} /> : 
            data.type === 'Pincode' ? <Layers className={`w-8 h-8 ${iconColors[data.type]}`} /> :
+           data.type === 'Store' ? <ShoppingBag className={`w-8 h-8 ${iconColors[data.type]}`} /> :
            <MapPin className={`w-8 h-8 ${iconColors[data.type]}`} />}
         </div>
         <div className="flex-1 min-w-0">
@@ -103,7 +121,12 @@ const InfoPanel: React.FC<InfoPanelProps> = ({ feature }) => {
           
           {/* Breadcrumbs */}
           <div className="flex flex-wrap items-center gap-2 mt-1.5 text-sm text-slate-500">
-            {data.district && data.type !== 'District' && (
+            {data.type === 'Store' && (
+               <span className="flex items-center gap-1 text-slate-600">
+                  <MapPin className="w-3 h-3"/> {data.vicinity || 'Bengaluru'}
+               </span>
+            )}
+            {data.district && data.type !== 'District' && data.type !== 'Store' && (
                 <span className="font-medium hover:text-slate-800 transition-colors">{data.district}</span>
             )}
             {data.taluk && (
@@ -117,7 +140,63 @@ const InfoPanel: React.FC<InfoPanelProps> = ({ feature }) => {
       </div>
 
       <div className="space-y-6">
+        
+        {/* --- RETAIL STORE SPECIFIC --- */}
+        {data.type === 'Store' && (
+             <div className="bg-red-50/50 p-4 rounded-xl border border-red-100 shadow-sm">
+                <h3 className="text-[11px] font-extrabold text-red-800/60 uppercase tracking-widest mb-4 flex items-center gap-2">
+                   <Activity className="w-3 h-3" /> Store Analytics
+                </h3>
+                
+                <div className="mb-4">
+                    <p className="text-[10px] text-slate-400 uppercase font-semibold mb-1">Category</p>
+                    <div className="flex gap-2">
+                        <span className="text-sm font-bold text-slate-800 bg-white border border-slate-200 px-2 py-1 rounded">{data.category}</span>
+                        <span className="text-sm font-medium text-slate-600 bg-slate-50 border border-slate-100 px-2 py-1 rounded">{data.subCategory}</span>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                   <div className="bg-white p-3 rounded-lg border border-red-100 shadow-sm">
+                      <p className="text-[10px] text-slate-400 uppercase font-semibold mb-1">Customer Rating</p>
+                      {renderStars(data.rating)}
+                   </div>
+                   <div className="bg-white p-3 rounded-lg border border-red-100 shadow-sm">
+                      <p className="text-[10px] text-slate-400 uppercase font-semibold mb-1">Reviews</p>
+                      <p className="text-lg font-bold text-slate-800">{data.userRatingsTotal ? data.userRatingsTotal.toLocaleString() : '-'}</p>
+                   </div>
+                </div>
+
+                {/* Contact Info (If Available) */}
+                <div className="space-y-2 bg-white p-3 rounded-lg border border-red-100 shadow-sm">
+                     {data.phone && (
+                         <div className="flex items-center gap-2 text-sm text-slate-700">
+                             <Phone className="w-3.5 h-3.5 text-slate-400"/>
+                             <a href={`tel:${data.phone}`} className="hover:underline">{data.phone}</a>
+                         </div>
+                     )}
+                     {data.website && (
+                         <div className="flex items-center gap-2 text-sm text-slate-700">
+                             <Globe className="w-3.5 h-3.5 text-slate-400"/>
+                             <a href={data.website} target="_blank" rel="noopener noreferrer" className="hover:underline truncate max-w-[200px]">{data.website}</a>
+                         </div>
+                     )}
+                     {data.openingHours && (
+                         <div className="flex items-start gap-2 text-sm text-slate-700">
+                             <Clock className="w-3.5 h-3.5 text-slate-400 mt-0.5"/>
+                             <span className="text-xs leading-tight">{data.openingHours}</span>
+                         </div>
+                     )}
+                     {!data.phone && !data.website && !data.openingHours && (
+                         <span className="text-xs text-slate-400 italic">No contact info available</span>
+                     )}
+                </div>
+             </div>
+        )}
+
+
         {/* Key Metrics Row */}
+        {(data.population !== undefined || data.areaSqKm !== undefined) && (
         <div className="grid grid-cols-2 gap-4">
              {data.population !== undefined ? (
                <div className="flex flex-col gap-1 p-4 rounded-xl bg-slate-50 border border-slate-100 shadow-sm transition-all hover:shadow-md hover:border-slate-200">
@@ -139,6 +218,7 @@ const InfoPanel: React.FC<InfoPanelProps> = ({ feature }) => {
                </div>
              )}
         </div>
+        )}
 
         {/* Literacy Progress */}
         {data.literacyRate !== undefined && (

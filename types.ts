@@ -2,7 +2,7 @@ export interface GeoMetadata {
   id: string; // Unique identifier for precise selection
   geocode: string; // New: Standardized Geocode (e.g., KA-T-01)
   name: string;
-  type: 'District' | 'Taluk' | 'Village' | 'Pincode';
+  type: 'District' | 'Taluk' | 'Village' | 'Pincode' | 'Store';
   district?: string; // New: Parent District
   taluk?: string;    // New: Parent Taluk (for Villages)
   population?: number; // Optional
@@ -33,6 +33,17 @@ export interface GeoMetadata {
   householdCount?: number; // Pincode/Village
   economicFocus?: string; // District
   
+  // --- Retail Store Specific ---
+  category?: string; // New: Main Category (e.g., Groceries, Fashion)
+  subCategory?: string; // New: Specific type (e.g., supermarket)
+  rating?: number; // Nullable for OSM
+  userRatingsTotal?: number; // Nullable for OSM
+  vicinity?: string;
+  isOpenNow?: boolean; // Derived from opening_hours if possible
+  openingHours?: string; // Raw string
+  phone?: string;
+  website?: string;
+
   // Allow arbitrary keys for imported data
   [key: string]: any;
 }
@@ -62,4 +73,5 @@ export enum MapLayer {
   TALUKS = 'TALUKS',
   VILLAGES = 'VILLAGES',
   PINCODES = 'PINCODES',
+  STORES = 'STORES',
 }
