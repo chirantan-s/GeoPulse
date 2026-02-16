@@ -54,8 +54,8 @@ const App: React.FC = () => {
   
   // Stores State
   const [stores, setStores] = useState<GeoFeature[]>([]);
-  // Multi-select state: Set of indices
-  const [selectedRegionIndices, setSelectedRegionIndices] = useState<Set<number>>(new Set([0]));
+  // Multi-select state: Set of indices. Default empty (no selection).
+  const [selectedRegionIndices, setSelectedRegionIndices] = useState<Set<number>>(new Set());
   const [isRegionMenuOpen, setIsRegionMenuOpen] = useState(false);
 
   // Filters State: Multi-select
@@ -172,7 +172,7 @@ const App: React.FC = () => {
   const toggleRegion = (index: number) => {
       const newSet = new Set(selectedRegionIndices);
       if (newSet.has(index)) {
-          if (newSet.size > 1) newSet.delete(index); // Prevent empty set
+          newSet.delete(index); 
       } else {
           newSet.add(index);
       }
@@ -181,8 +181,16 @@ const App: React.FC = () => {
 
   const handleScanStores = async () => {
       // Map selection indices to the scanRegions array
-      const regionsToScan = scanRegions.filter((_, idx) => selectedRegionIndices.has(idx));
-      if (regionsToScan.length === 0) return;
+      let regionsToScan = scanRegions.filter((_, idx) => selectedRegionIndices.has(idx));
+      
+      // If no regions selected, scan ALL regions (Districts)
+      if (regionsToScan.length === 0) {
+          if (window.confirm("No specific region selected. Scanning entire Bengaluru Urban & Rural districts? This may take a while.")) {
+              regionsToScan = scanRegions;
+          } else {
+              return;
+          }
+      }
 
       setIsScanning(true);
       setScanProgress('Initializing Scan...');
@@ -218,7 +226,7 @@ const App: React.FC = () => {
           setShowFilterBar(true); 
           
           if (allStores.length === 0) {
-              alert("No stores found in selected sectors. Try another region.");
+              alert("No stores found in scanned sectors.");
           }
       } catch (error) {
           console.error("Scan failed", error);
@@ -417,9 +425,11 @@ const App: React.FC = () => {
                        className="flex items-center justify-between gap-2 bg-slate-700 text-white text-xs py-1.5 px-3 rounded border border-slate-600 hover:bg-slate-600 hover:border-slate-500 transition-all w-40"
                    >
                        <span className="truncate">
-                           {selectedRegionIndices.size === 1 
-                              ? scanRegions.find((_,i) => selectedRegionIndices.has(i))?.name 
-                              : `${selectedRegionIndices.size} Regions Selected`}
+                           {selectedRegionIndices.size === 0 
+                              ? "Select a Region"
+                              : selectedRegionIndices.size === 1 
+                                ? scanRegions.find((_,i) => selectedRegionIndices.has(i))?.name 
+                                : `${selectedRegionIndices.size} Regions Selected`}
                        </span>
                        <ChevronDown className={`w-3 h-3 transition-transform ${isRegionMenuOpen ? 'rotate-180' : ''}`} />
                    </button>
