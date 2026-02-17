@@ -93,10 +93,13 @@ const transformToGeoFeature = (element: any): GeoFeature => {
       const idNum = parseInt(String(element.id).replace(/\D/g, '')) || 0;
       // Simple pseudo-random based on ID ensures it's stable across renders
       const seed = Math.sin(idNum) * 10000;
-      const rand = seed - Math.floor(seed);
+      const rand = seed - Math.floor(seed); // 0.0 to 1.0
       
-      // Generate realistic distribution between 3.5 and 5.0 for a better demo
-      rating = 3.5 + (rand * 1.5);
+      // Generate realistic distribution:
+      // We want range roughly 2.5 to 5.0 to show diversity in colors (Red/Yellow/Green)
+      // rating = 2.5 + (rand * 2.5) -> 2.5 to 5.0
+      rating = 2.5 + (rand * 2.5);
+      
       // Round to 1 decimal
       rating = Math.round(rating * 10) / 10;
   }

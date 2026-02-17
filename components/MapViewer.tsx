@@ -76,25 +76,12 @@ const RecenterControl = () => {
   );
 };
 
-// --- Category Color Mapping ---
-const getCategoryColor = (category: string) => {
-    switch (category) {
-        case 'Groceries': return '#10b981'; // Emerald 500
-        case 'Food & Beverages': return '#f59e0b'; // Amber 500
-        case 'Fashion': return '#ec4899'; // Pink 500
-        case 'Accessories': return '#d946ef'; // Fuchsia 500
-        case 'Electronics': return '#3b82f6'; // Blue 500
-        case 'Home & Living': return '#8b5cf6'; // Violet 500
-        case 'Hardware & DIY': return '#6366f1'; // Indigo 500
-        case 'Health': return '#ef4444'; // Red 500
-        case 'Beauty': return '#be185d'; // Pink 700
-        case 'Automotive': return '#64748b'; // Slate 500
-        case 'Books & Stationery': return '#06b6d4'; // Cyan 500
-        case 'Gifts & Hobbies': return '#14b8a6'; // Teal 500
-        case 'Liquor & Tobacco': return '#854d0e'; // Yellow 900
-        case 'Department Stores': return '#374151'; // Gray 700
-        default: return '#9ca3af'; // Gray 400
-    }
+// --- Rating Color Mapping ---
+const getRatingColor = (rating?: number) => {
+    if (rating === undefined || rating === null) return '#ef4444'; // Red (No rating/Low)
+    if (rating >= 4.5) return '#10b981'; // Green (Excellent)
+    if (rating >= 3.5) return '#f59e0b'; // Yellow (Good)
+    return '#ef4444'; // Red (Average/Poor)
 }
 
 const MapViewer: React.FC<MapViewerProps> = ({ 
@@ -208,11 +195,13 @@ const MapViewer: React.FC<MapViewerProps> = ({
   // Points (Retail Stores): CircleMarkers
   const pointToLayer = (feature: any, latlng: L.LatLng) => {
       const selected = isSelected(feature.properties);
-      const category = feature.properties.category || 'General Retail';
-      const color = getCategoryColor(category);
+      
+      // COLOR BY RATING
+      const rating = feature.properties.rating;
+      const color = getRatingColor(rating);
 
       return L.circleMarker(latlng, {
-          radius: selected ? 12 : 5, // Make selected much larger
+          radius: selected ? 12 : 6, // Make selected much larger
           fillColor: color, 
           color: selected ? '#ffffff' : '#fff',
           weight: selected ? 3 : 1.5,
@@ -250,7 +239,20 @@ const MapViewer: React.FC<MapViewerProps> = ({
     } else if (p.type === 'Pincode') {
         tooltipContent = `<div class="font-sans px-1"><div class="font-bold text-purple-900">${p.code || p.name}</div><div class="text-xs text-slate-500 uppercase tracking-wider">Postal Zone</div></div>`;
     } else if (p.type === 'Store') {
-        tooltipContent = `<div class="font-sans px-1"><div class="font-bold text-slate-900">${p.name}</div><div class="text-xs text-slate-500 uppercase tracking-wider">${p.category}</div><div class="text-[9px] text-slate-400 mt-0.5">${p.subCategory}</div>${p.rating ? `<div class="flex items-center gap-1 mt-1 text-xs font-bold text-amber-500"><span class="text-[10px] text-slate-400 font-normal">Rating:</span> ${p.rating} ★</div>` : ''}</div>`;
+        // Format: ⭐ [Rating] ([Count] reviews)
+        const ratingStr = p.rating 
+            ? `<span class="text-amber-500 font-bold">⭐ ${p.rating}</span> <span class="text-slate-500 font-normal">(${p.userRatingsTotal || 0} reviews)</span>` 
+            : `<span class="text-slate-400 italic">No ratings available</span>`;
+
+        tooltipContent = `
+            <div class="font-sans px-1 min-w-[140px]">
+                <div class="font-bold text-slate-900 leading-tight mb-0.5">${p.name}</div>
+                <div class="text-[10px] text-slate-500 uppercase tracking-wider mb-0.5">${p.category}</div>
+                <div class="text-[9px] text-slate-400 truncate mb-1">${p.vicinity || p.subCategory}</div>
+                <div class="mt-1 bg-slate-50 border border-slate-100 rounded px-1.5 py-0.5 inline-block text-xs">
+                    ${ratingStr}
+                </div>
+            </div>`;
     }
 
     if (tooltipContent) {
@@ -282,7 +284,7 @@ const MapViewer: React.FC<MapViewerProps> = ({
            else if (feature.properties.type === 'Pincode') targetLayer.setStyle(pincodeStyle(feature));
         }
         if (feature.properties.type === 'Store' && targetLayer.setRadius && !isSelected(feature.properties)) {
-            targetLayer.setRadius(5); // Reset
+            targetLayer.setRadius(6); // Reset (Updated default)
         }
       },
       click: (e) => {
@@ -393,20 +395,20 @@ const MapViewer: React.FC<MapViewerProps> = ({
            >
               {stores.length > 0 && (
                   <div className="mb-4">
-                    <h4 className="font-bold text-slate-800 mb-2 uppercase tracking-wide text-[10px] border-b border-slate-100 pb-1">Retail Categories</h4>
+                    <h4 className="font-bold text-slate-800 mb-2 uppercase tracking-wide text-[10px] border-b border-slate-100 pb-1">Customer Ratings</h4>
                     <div className="space-y-1">
-                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-[#10b981]"></div> Groceries</div>
-                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-[#f59e0b]"></div> Food & Beverages</div>
-                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-[#ec4899]"></div> Fashion</div>
-                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-[#d946ef]"></div> Accessories</div>
-                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-[#3b82f6]"></div> Electronics</div>
-                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-[#8b5cf6]"></div> Home & Living</div>
-                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-[#ef4444]"></div> Health</div>
-                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-[#be185d]"></div> Beauty</div>
-                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-[#64748b]"></div> Automotive</div>
-                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-[#06b6d4]"></div> Books & Stationery</div>
-                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-[#854d0e]"></div> Liquor & Tobacco</div>
-                        <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-[#9ca3af]"></div> General Retail</div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-2.5 h-2.5 rounded-full bg-[#10b981]"></div> 
+                            <span className="text-slate-600">4.5+ (Excellent)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-2.5 h-2.5 rounded-full bg-[#f59e0b]"></div> 
+                            <span className="text-slate-600">3.5 - 4.4 (Good)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <div className="w-2.5 h-2.5 rounded-full bg-[#ef4444]"></div> 
+                            <span className="text-slate-600">&lt; 3.5 (Average)</span>
+                        </div>
                     </div>
                   </div>
               )}
